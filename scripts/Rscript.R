@@ -7,6 +7,7 @@ library(stringr)
 library(wesanderson)
 library(lme4)
 library(scales)
+library(simr)
 
 
 ########################## Experiment 1 ##################################
@@ -24,7 +25,7 @@ mean(small_X1_42_LR$choice)
 large_X1_42_LR <-subset(X1_42_LR, number == "large")
 mean(large_X1_42_LR$choice)
 
-X1_42_UD <- read_csv("../Data/1-42_UD.csv")
+X1_42_UD <- read.csv("../Data/1-42_UD.csv")
 
 X1_42_UD$BEEID <- as.factor(X1_42_UD$BEEID) # treat as a categorical factor
 summary(X1_42_UD)
@@ -560,5 +561,174 @@ exp2.RL <- ggplot(R4, aes(x = test, y = proportion, fill = Number)) + #ggplot st
 
 print(exp2.RL)
 
+#################### Power analysis by simulation for an effect size of interest = 0.65 ####################
 
 
+# Parameters
+n_bees <- 17
+n_data_points <- 10
+n_total <- n_bees * n_data_points
+p1 <- 0.65  # Alternative hypothesis proportion
+alpha <- 0.05
+nsim <- 1000  # Number of simulations
+
+# Function to simulate data with random effects
+simulate_data <- function(n_bees, n_data_points, p, random_effect_sd) {
+  bee_ids <- rep(1:n_bees, each = n_data_points)
+  random_effects <- rnorm(n_bees, 0, random_effect_sd)
+  choices <- sapply(1:n_total, function(i) {
+    prob <- plogis(qlogis(p) + random_effects[bee_ids[i]])
+    rbinom(1, 1, prob)
+  })
+  data.frame(bee_id = factor(bee_ids), choice = choices)
+}
+
+# General assumptions for random effect standard deviation
+random_effect_sd <- 0.4418846
+
+# Simulate data with the specified effect size
+set.seed(123)  # For reproducibility
+simulated_data <- simulate_data(n_bees, n_data_points, p1, random_effect_sd)
+
+# Print the simulated dataframe
+print(head(simulated_data))
+summary(simulated_data)
+
+# Initialize counter for significant results
+significant_results <- 0
+
+# Run simulations
+for (i in 1:nsim) {
+  # Simulate data under the alternative hypothesis
+  simulated_data <- simulate_data(n_bees, n_data_points, p1, random_effect_sd)
+  
+  # Fit the model to the simulated data
+  model <- tryCatch({
+    glmer(choice ~ 1 + (1 | bee_id), family = binomial(link = "logit"), data = simulated_data)
+  }, error = function(e) {
+    message("Error fitting model: ", e)
+    return(NULL)
+  })
+  
+  if (!is.null(model)) {
+    # Extract p-value for the intercept
+    p_value <- summary(model)$coefficients[1, "Pr(>|z|)"]
+    
+    # Check if p-value is below the significance level
+    if (p_value < alpha) {
+      significant_results <- significant_results + 1
+    }
+  }
+}
+
+# Calculate power
+power_estimate <- significant_results / nsim
+print(paste("Estimated Power: ", round(power_estimate, 3)))
+
+
+
+################# Power analysis across multiple effect sizes ###########################
+
+# Parameters
+n_bees <- 17
+n_data_points <- 10
+n_total <- n_bees * n_data_points
+p0 <- 0.5  # Baseline proportion
+alpha <- 0.05
+nsim <- 1000  # Number of simulations
+
+# Function to simulate data with random effects
+simulate_data <- function(n_bees, n_data_points, p, random_effect_sd) {
+  bee_ids <- rep(1:n_bees, each = n_data_points)
+  random_effects <- rnorm(n_bees, 0, random_effect_sd)
+  choices <- sapply(1:n_total, function(i) {
+    prob <- plogis(qlogis(p) + random_effects[bee_ids[i]])
+    rbinom(1, 1, prob)
+  })
+  data.frame(bee_id = factor(bee_ids), choice = choices)
+}
+
+# General assumptions for random effect standard deviation
+random_effect_sd <- 0.4418846
+set.seed(123) 
+
+# Function to calculate power for a given effect size
+calculate_power <- function(p1) {
+  significant_results <- 0
+  
+  for (i in 1:nsim) {
+    # Simulate data under the alternative hypothesis
+    simulated_data <- simulate_data(n_bees, n_data_points, p1, random_effect_sd)
+    
+    # Fit the model to the simulated data
+    model <- tryCatch({
+      glmer(choice ~ 1 + (1 | bee_id), family = binomial(link = "logit"), data = simulated_data)
+    }, error = function(e) {
+      message("Error fitting model: ", e)
+      return(NULL)
+    })
+    
+    if (!is.null(model)) {
+      # Extract p-value for the intercept
+      p_value <- summary(model)$coefficients[1, "Pr(>|z|)"]
+      
+      # Check if p-value is below the significance level
+      if (p_value < alpha) {
+        significant_results <- significant_results + 1
+      }
+    }
+  }
+  
+  # Calculate power
+  power_estimate <- significant_results / nsim
+  return(power_estimate)
+}
+
+# Effect sizes to test (different values of p1)
+effect_sizes <- seq(0.5, 0.8, by = 0.05)
+
+# Calculate power for each effect size
+power_results <- sapply(effect_sizes, calculate_power)
+
+# Print power results for different values of p1
+print(data.frame(p1 = effect_sizes, power = round(power_results, 3)))
+
+
+
+##### Check simulated dataframes
+
+
+library(lme4)
+
+# Function to simulate data with random effects
+simulate_data <- function(n_bees, n_data_points, p, random_effect_sd) {
+  bee_ids <- rep(1:n_bees, each = n_data_points)
+  random_effects <- rnorm(n_bees, 0, random_effect_sd)
+  choices <- sapply(1:n_total, function(i) {
+    prob <- plogis(qlogis(p) + random_effects[bee_ids[i]])
+    rbinom(1, 1, prob)
+  })
+  data.frame(bee_id = factor(bee_ids), choice = choices)
+}
+
+# Function to compute summary statistics
+compute_summary <- function(data) {
+  choice_summary <- summary(data$choice)
+  choice_mean <- mean(data$choice)
+  choice_sd <- sd(data$choice)
+  list(Choice_Summary = choice_summary, Mean = choice_mean, SD = choice_sd)
+}
+
+# Generate and print five dataframes with their summary statistics
+set.seed(123)  # For reproducibility
+data_list <- lapply(1:5, function(x) simulate_data(n_bees, n_data_points, p1, random_effect_sd))
+
+for (i in 1:5) {
+  cat(paste("Dataframe", i, ":\n"))
+  print(head(data_list[[i]], 10))  # Print first 10 rows for brevity
+  cat("\nSummary Statistics:\n")
+  summary_stats <- compute_summary(data_list[[i]])
+  print(summary_stats$Choice_Summary)
+  cat("Mean:", summary_stats$Mean, "\n")
+  cat("SD:", summary_stats$SD, "\n\n")
+}
