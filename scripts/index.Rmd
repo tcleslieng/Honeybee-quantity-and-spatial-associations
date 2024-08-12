@@ -1,47 +1,124 @@
-### Packages
+---
+title: "Spontaneous and acquired spatial-numerical associations in honeybees (Apis mellifera) reveals an interacting rightward bias with the mental number line"
+author: "Leslie Ng on behalf of all authors"
+date: "2024-08-09"
+output:
+  html_document:
+   toc: yes
+   toc_float: yes
+   collapsed: true 
+   smooth_scroll: true
+   depth: 3 
+   highlight: tango # different theme for the appearance of the code
+   theme: flatly
+   code_folding: hide
+self_contained: yes
+mode: selfcontained
+editor_options:
+  chunk_output_type: console
+knit: (function(inputFile, encoding) {
+  rmarkdown::render(inputFile, encoding = encoding, output_dir = "../Output") })
+---
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
+
+This document provides details on data processing, statistical analysis and figures of the original manuscript submitted for peer review (titled: "Spontaneous and acquired spatial-numerical associations in honeybees (Apis mellifera) reveals an interacting rightward bias with the mental number line").
+
+The following code is written in the R programming language.
+
+# Libraries 
+
+### *Install packages*
+```{r eval=FALSE}
+install.packages("dplyr")
+install.packages("ggplot2")
+install.packages("tidyverse")
+install.packages("stringr")
+install.packages("wesanderson")
+install.packages("lme4")
+```
+
+### *Load packages*
+
+```{r, message=FALSE, warning=FALSE}
 library(dplyr)
 library(ggplot2)
 library(tidyverse)
 library(stringr)
 library(wesanderson)
 library(lme4)
-library(scales)
-library(simr)
+```
 
+# Data importing and data wrangling
 
-########################## Experiment 1 ##################################
+## Experiment 1
 
-####### Data importing
+```{r, message=FALSE, warning=FALSE}
+
+#Left right data
 
 X1_42_LR <- read.csv("../Data/1-42 LR.csv") # Import data
-
 X1_42_LR$bee_id <- as.factor(X1_42_LR$bee_id) # treat as a categorical factor
 summary(X1_42_LR)
-
-
 small_X1_42_LR <-subset(X1_42_LR, number == "small") #subset original data sets into data for the Small Number and Large number tests
 mean(small_X1_42_LR$choice)
 large_X1_42_LR <-subset(X1_42_LR, number == "large")
 mean(large_X1_42_LR$choice)
 
-X1_42_UD <- read.csv("../Data/1-42_UD.csv")
+# Up down data
 
+X1_42_UD <- read.csv("../Data/1-42_UD.csv")
 X1_42_UD$BEEID <- as.factor(X1_42_UD$BEEID) # treat as a categorical factor
 summary(X1_42_UD)
-
-
 small_X1_42_UD <-subset(X1_42_UD, NUMBER == "small") #subset original data sets into data for the Small Number and Large number tests
 mean(small_X1_42_UD$CHOICE)
 summary(small_X1_42_UD)
-
 large_X1_42_UD <-subset(X1_42_UD, NUMBER == "large")
 summary(large_X1_42_UD)
 mean(large_X1_42_UD$CHOICE)
+```
+
+## Experiment 2
+
+```{r, message=FALSE, warning=FALSE}
+testing_data <- read.csv("../Data/part 2_testing.csv") # data from all non-rewarded tests
+testing_data$bee_id<-factor(testing_data$bee_id)
+summary (testing_data)
+LR_test <-subset(testing_data, group == "LR") #Subset bees in the Left to right group
+RL_test <-subset(testing_data, group == "RL") #Subset bees in the Right to Left group
+part_2_training <- read_csv("../Data/part 2_training.csv") # data from only training data
+# LR small number test
+
+LTS_test <- subset(LR_test, test_type == "LTS") #subset data into the Left to right small number test
+summary(LTS_test)
+
+# LR large number test
+
+LTB_test <- subset(LR_test, test_type == "LTB") #subset data into the Left to right large number test
+summary(LTB_test)
+
+# LR small number transfer test
+TTS_test <- subset(LR_test, test_type == "TTS") #subset data into the Left to right small number transfer test
+summary(TTS_test)
+
+# LR large/big number transfer test
+
+TTB_test <- subset(LR_test, test_type == "TTB") #subset data into the Left to right larger number transfer test
+summary(TTB_test)
+```
 
 
-##### Regression analysis for testing horizontal spatial-quantity associations
+# Generalized linear models
 
+## Experiment 1
+
+### Regression analysis for testing horizontal spatial-quantity associations
+
+```{r message=FALSE}
 model_small_LR <- glmer(choice~ 1 + (1|bee_id), family=binomial(link="logit"), small_X1_42_LR) # Regression model for the Small Number test
 summary(model_small_LR)
 
@@ -55,11 +132,11 @@ summary(model_large_LR)
 confint(model_large_LR) #confidence interval
 largeLRconfintlow<-(exp(-0.8955361)/(1 + exp(-0.8955361))) #reverse link function
 largeLRconfinthigh<-(exp(-0.4451618)/(1 + exp(-0.4451618)))
+```
 
+### Regression models for testing of vertical spatial-quantity associations
 
-##### Regression models for testing of vertical spatial-quantity associations
-
-
+```{r message=FALSE}
 model_small_UD <- glmer(CHOICE~ 1 + (1|BEEID), family=binomial(link="logit"), small_X1_42_UD)
 summary(model_small_UD)
 
@@ -74,25 +151,12 @@ confint(model_large_UD)
 
 largeUDconfintlow<-(exp(-1.7406589)/(1 + exp(-1.7406589))) #reverse link function
 largeUDconfinthigh<-(exp(-0.7373596)/(1 + exp(-0.7373596)))
+```
 
+## Experiment 2
+### Regression analyses for Left to right tests
 
-
-
-########################## Experiment 2 ##################################
-
-
-####### Data importing
-
-testing_data <- read.csv("../Data/part 2_testing.csv") # data from all non-rewarded tests
-testing_data$bee_id<-factor(testing_data$bee_id)
-summary (testing_data)
-LR_test <-subset(testing_data, group == "LR") #Subset bees in the Left to right group
-RL_test <-subset(testing_data, group == "RL") #Subset bees in the Right to Left group
-
-part_2_training <- read_csv("../Data/part 2_training.csv") # data from only training data
-
-
-############ Regression analyses for Left to right tests
+```{r message=FALSE}
 
 # LR small number test
 
@@ -140,9 +204,11 @@ confint(testing_LR_TTB) #confidence interval
 testing_LR_TTB_confintlow<-(exp(-0.08294314)/(1 + exp(-0.08294314))) #reverse link function
 testing_LR_TTB_confinthigh<-(exp(0.6959484)/(1 + exp(0.6959484))) #reverse link function
 
+```
 
+### Regression analyses for Right to left tests
 
-############ Regression analyses for Right to left tests
+```{r message=FALSE}
 
 # RL small number test
 RL_LTS <- subset(RL_test, test_type == "LTS") #subset data into the Right to left small number transfer test
@@ -185,19 +251,23 @@ summary(testing_RL_TTB)
 confint(testing_RL_TTB) #confidence interval
 testing_RL_TTB_confintlow<-(exp(-0.2880571)/(1 + exp(-0.2880571))) #reverse link function
 testing_RL_TTB_confinthigh<-(exp(0.3866840)/(1 + exp(0.3866840))) #reverse link function
+```
 
+### Regression model comparing the performance of bees trained to left-to-right with bees trained to right-to-left
 
-
-#### Regression model comparing the performance of bees trained to left-to-right with bees trained to right-to-left
+```{r message=FALSE}
 
 Trainingcompar_lm <- glmer(choice ~ group + (1|bee_id), part_2_training, family = binomial) # generalised linear mixed model 
 summary(Trainingcompar_lm)
 
 
+```
 
+# Figures
 
-########################## Figures ##################################
+### Figure 5A
 
+```{r message = FALSE, warning=FALSE}
 cbPalette <- c("#C6CDF7", "#E6A0C4") # Set colours for graphs
 
 ######## Figure 5 A
@@ -249,11 +319,11 @@ exp1.LR <- ggplot(R, aes(x = number, y = proportion, fill = Direction)) +  # ggp
         axis.title = element_text(size = 17),
         legend.key.size = unit(1.2, 'cm'))
 print(exp1.LR)
+```
 
+### Figure 5 B
 
-
-######## Figure 5 B
-
+```{r message=FALSE, warning = FALSE}
 largeDUconfintlow=(0.5-largeUDconfinthigh)+0.5 # Calculating CIs
 largeDUconfinthigh=(0.5-largeUDconfintlow)+0.5
 
@@ -278,9 +348,9 @@ levels(meanpoints2$NUMBER) <- str_to_title(levels(meanpoints2$NUMBER)) # recapit
 colnames(meanpoints2)[2] ="number" # rename column to match dframe, because the column name needs to match the dframe as we want to plot both in the same graph
 levels(meanpoints2$number) <- str_to_title(levels(meanpoints2$number)) # recapitalize condition names
 colnames(meanpoints2)[2] ="number" # rename column to match dframe, because the column name needs to match the dframe as we want to plot both in the same graph
-meanpoints2$Direction <- "U" # Adds a column to be consistent with the structure of R2
+meanpoints2$direction <- "U" # Adds a column to be consistent with the structure of R2
 meanpoints2$proportion[meanpoints2$proportion == 0] <- 0.02 # Change all 0 values to 0.02 so they can be seen on the graph
-meanpoints2$position <- ifelse(meanpoints2$number == "Large", 0.8, 1.8)  # Set the exact position of geompoints to be overlayed on the bar graphs
+meanpoints2$position <- ifelse(meanpoints2$number == "Large", 1.2, 2.2)  # Set the exact position of geompoints to be overlayed on the bar graphs
 
 exp1.UD <- ggplot(R2, aes(x = number, y = proportion, fill = Direction)) + # ggplot structure
   geom_bar(stat = "identity", position = "dodge") + 
@@ -289,7 +359,7 @@ exp1.UD <- ggplot(R2, aes(x = number, y = proportion, fill = Direction)) + # ggp
   geom_hline(yintercept = 0.5, linetype = "dashed", colour = "grey", size = 1) +
   labs(x = "Number Tests", y = "Mean proportion of choosing U or D in two number tests") +
   scale_fill_manual(values = cbPalette) +
-  geom_point(data = meanpoints2, aes(x = position, y = proportion, group = Direction), position = position_jitterdodge(jitter.width = 0.2, jitter.height = 0.02, dodge.width = 0.9), show.legend = FALSE, size = 2.2, colour = "azure4", na.rm = FALSE) + 
+  geom_point(data = meanpoints2, aes(x = position, y = proportion, fill = direction), position = position_jitterdodge(jitter.width = 0.2, jitter.height = 0.02, dodge.width = 0.9), show.legend = FALSE, size = 2.2, colour = "azure4", na.rm = FALSE) + 
   theme(panel.background = element_blank(),
         axis.line = element_line(colour = "black"),
         axis.text = element_text(size = 14),
@@ -298,9 +368,11 @@ exp1.UD <- ggplot(R2, aes(x = number, y = proportion, fill = Direction)) + # ggp
         axis.title = element_text(size = 17),
         legend.key.size = unit(1.2, 'cm'))
 print(exp1.UD)
+```
 
-######## Figure 6 A
+### Figure 6 A
 
+```{r message =FALSE, warning=FALSE}
 dat <- part_2_training
 
 # Convert relevant columns to factors
@@ -375,13 +447,11 @@ learning.curve.lr <- ggplot(dat.lr.mean, # ggplot structure
   theme_classic()
 print(learning.curve.lr)
 ggsave(learning.curve.lr, width = 5, height = 5, dpi = 300, filename = "LRline.pdf")
+```
 
+### Figure 6 B
 
-
-
-######## Figure 6 B
-
-
+```{r message=FALSE, warning=FALSE}
 R3 <- data.frame(Number = rep(c("Large number","Small number"), each = 2), # Create dataframe for graph
                  test = rep(c("Learning test","Transfer test"), times = 2),
                  proportion = c(0.63,0.57, 0.56,0.44),
@@ -433,10 +503,11 @@ exp2.LR <- ggplot(R3, aes(x = test, y = proportion, fill = Number)) +
 
 print(exp2.LR)
 
+```
 
+### Figure 7 A
 
-######## Figure 6 A
-
+```{r message=FALSE, warning=FALSE}
 # Convert relevant columns to factors
 dat$bee_id <- as.factor(dat$bee_id)
 dat$trial <- as.factor(dat$trial)
@@ -462,7 +533,7 @@ dat.rl.trial.mean <- dat.rl.mean %>%
     ci_upper = mean.trial + qt(0.975, df=n-1) * sem
   )
 
-learning.curve.rl <- ggplot(dat.rl.mean,  # ggplot structure
+learning.curve.rl2 <- ggplot(dat.rl.mean,  # ggplot structure
                             aes(x = block, 
                                 y = mean,
                                 group = factor(bee_id)))+ # to group the same flower in different visual systems into one group, so the lines will connect them together.
@@ -506,13 +577,12 @@ learning.curve.rl <- ggplot(dat.rl.mean,  # ggplot structure
         axis.text.x  = element_text(size = 14, colour = "black"),
         axis.title.y = element_text(size = 17, vjust = 1),
         axis.text.y = element_text(size = 14, colour = "black")) 
-print(learning.curve.rl)
-ggsave(learning.curve.rl, width = 5, height = 5, dpi = 300, filename = "RLline.pdf")
+print(learning.curve.rl2)
+```
 
+### Figure 7 B
 
-
-######## Figure 6 B
-
+```{r message=FALSE, warning=FALSE}
 R4 <- data.frame(Number = rep(c("Large number","Small number"), each = 2), # Create dataframe for bargraph
                  test = rep(c("Learning test","Transfer test"), times = 2),
                  proportion = c(0.46,0.51, 0.54,0.54),
@@ -563,10 +633,76 @@ exp2.RL <- ggplot(R4, aes(x = test, y = proportion, fill = Number)) + #ggplot st
 
 print(exp2.RL)
 
-#################### Power analysis by simulation for an effect size of interest = 0.64 ####################
+```
 
+# Power analysis by simulation
 
+### N = 17
+```{r message=FALSE}
 # Parameters
+n_bees <- 17
+n_data_points <- 10
+n_total <- n_bees * n_data_points
+p1 <- 0.64  # Alternative hypothesis proportion
+alpha <- 0.05
+nsim <- 1000  # Number of simulations
+
+# Function to simulate data with random effects
+simulate_data <- function(n_bees, n_data_points, p, random_effect_sd) {
+  bee_ids <- rep(1:n_bees, each = n_data_points)
+  random_effects <- rnorm(n_bees, 0, random_effect_sd)
+  choices <- sapply(1:n_total, function(i) {
+    prob <- plogis(qlogis(p) + random_effects[bee_ids[i]])
+    rbinom(1, 1, prob)
+  })
+  data.frame(bee_id = factor(bee_ids), choice = choices)
+}
+
+# General assumptions for random effect standard deviation
+random_effect_sd <- 0.4418846
+
+# Simulate data with the specified effect size
+set.seed(123)  # For reproducibility
+simulated_data <- simulate_data(n_bees, n_data_points, p1, random_effect_sd)
+
+# Print the simulated dataframe
+print(head(simulated_data))
+summary(simulated_data)
+
+# Initialize counter for significant results
+significant_results <- 0
+
+# Run simulations
+for (i in 1:nsim) {
+  # Simulate data under the alternative hypothesis
+  simulated_data <- simulate_data(n_bees, n_data_points, p1, random_effect_sd)
+  
+  # Fit the model to the simulated data
+  model <- tryCatch({
+    glmer(choice ~ 1 + (1 | bee_id), family = binomial(link = "logit"), data = simulated_data)
+  }, error = function(e) {
+    message("Error fitting model: ", e)
+    return(NULL)
+  })
+  
+  if (!is.null(model)) {
+    # Extract p-value for the intercept
+    p_value <- summary(model)$coefficients[1, "Pr(>|z|)"]
+    
+    # Check if p-value is below the significance level
+    if (p_value < alpha) {
+      significant_results <- significant_results + 1
+    }
+  }
+}
+
+# Calculate power
+power_estimate <- significant_results / nsim
+print(paste("Estimated Power: ", round(power_estimate, 3)))
+```
+
+### N = 42
+```{r message =FALSE}
 n_bees <- 42
 n_data_points <- 10
 n_total <- n_bees * n_data_points
@@ -626,111 +762,6 @@ for (i in 1:nsim) {
 # Calculate power
 power_estimate <- significant_results / nsim
 print(paste("Estimated Power: ", round(power_estimate, 3)))
+```
 
 
-
-################# Power analysis across multiple effect sizes ###########################
-
-# Parameters
-n_bees <- 17
-n_data_points <- 10
-n_total <- n_bees * n_data_points
-p0 <- 0.5  # Baseline proportion
-alpha <- 0.05
-nsim <- 1000  # Number of simulations
-
-# Function to simulate data with random effects
-simulate_data <- function(n_bees, n_data_points, p, random_effect_sd) {
-  bee_ids <- rep(1:n_bees, each = n_data_points)
-  random_effects <- rnorm(n_bees, 0, random_effect_sd)
-  choices <- sapply(1:n_total, function(i) {
-    prob <- plogis(qlogis(p) + random_effects[bee_ids[i]])
-    rbinom(1, 1, prob)
-  })
-  data.frame(bee_id = factor(bee_ids), choice = choices)
-}
-
-# General assumptions for random effect standard deviation
-random_effect_sd <- 0.4418846
-set.seed(123) 
-
-# Function to calculate power for a given effect size
-calculate_power <- function(p1) {
-  significant_results <- 0
-  
-  for (i in 1:nsim) {
-    # Simulate data under the alternative hypothesis
-    simulated_data <- simulate_data(n_bees, n_data_points, p1, random_effect_sd)
-    
-    # Fit the model to the simulated data
-    model <- tryCatch({
-      glmer(choice ~ 1 + (1 | bee_id), family = binomial(link = "logit"), data = simulated_data)
-    }, error = function(e) {
-      message("Error fitting model: ", e)
-      return(NULL)
-    })
-    
-    if (!is.null(model)) {
-      # Extract p-value for the intercept
-      p_value <- summary(model)$coefficients[1, "Pr(>|z|)"]
-      
-      # Check if p-value is below the significance level
-      if (p_value < alpha) {
-        significant_results <- significant_results + 1
-      }
-    }
-  }
-  
-  # Calculate power
-  power_estimate <- significant_results / nsim
-  return(power_estimate)
-}
-
-# Effect sizes to test (different values of p1)
-effect_sizes <- seq(0.5, 0.8, by = 0.05)
-
-# Calculate power for each effect size
-power_results <- sapply(effect_sizes, calculate_power)
-
-# Print power results for different values of p1
-print(data.frame(p1 = effect_sizes, power = round(power_results, 3)))
-
-
-
-##### Check simulated dataframes
-
-
-library(lme4)
-
-# Function to simulate data with random effects
-simulate_data <- function(n_bees, n_data_points, p, random_effect_sd) {
-  bee_ids <- rep(1:n_bees, each = n_data_points)
-  random_effects <- rnorm(n_bees, 0, random_effect_sd)
-  choices <- sapply(1:n_total, function(i) {
-    prob <- plogis(qlogis(p) + random_effects[bee_ids[i]])
-    rbinom(1, 1, prob)
-  })
-  data.frame(bee_id = factor(bee_ids), choice = choices)
-}
-
-# Function to compute summary statistics
-compute_summary <- function(data) {
-  choice_summary <- summary(data$choice)
-  choice_mean <- mean(data$choice)
-  choice_sd <- sd(data$choice)
-  list(Choice_Summary = choice_summary, Mean = choice_mean, SD = choice_sd)
-}
-
-# Generate and print five dataframes with their summary statistics
-set.seed(123)  # For reproducibility
-data_list <- lapply(1:5, function(x) simulate_data(n_bees, n_data_points, p1, random_effect_sd))
-
-for (i in 1:5) {
-  cat(paste("Dataframe", i, ":\n"))
-  print(head(data_list[[i]], 10))  # Print first 10 rows for brevity
-  cat("\nSummary Statistics:\n")
-  summary_stats <- compute_summary(data_list[[i]])
-  print(summary_stats$Choice_Summary)
-  cat("Mean:", summary_stats$Mean, "\n")
-  cat("SD:", summary_stats$SD, "\n\n")
-}
