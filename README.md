@@ -24,6 +24,7 @@ Adrian G Dyer - 0000-0002-2632-9061
 
 Scarlett R Howard - 0000-0002-1895-5409
 
+Visit here for html page: https://tcleslieng.github.io/Honeybee-quantity-and-spatial-associations/
 This readme file describes the data files accompanying the above publication. For any further queries please contact scarlett.howard@monash.edu The following files are included:
 
 1) "1-42 UD.csv"
