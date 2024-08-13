@@ -29,8 +29,8 @@ X1_42_UD <- read.csv("../Data/1-42_UD.csv")
 
 X1_42_UD$BEEID <- as.factor(X1_42_UD$BEEID) # treat as a categorical factor
 summary(X1_42_UD)
-
-
+glimpse(X1_42_UD)
+X1_42_UD$CHOICE <- as.factor(X1_42_UD$CHOICE)
 small_X1_42_UD <-subset(X1_42_UD, NUMBER == "small") #subset original data sets into data for the Small Number and Large number tests
 mean(small_X1_42_UD$CHOICE)
 summary(small_X1_42_UD)
